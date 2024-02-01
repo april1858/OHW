@@ -1,3 +1,3 @@
-module github.com/fixme_my_friend/hw01_hello_otus
+module github.com/april1858/ohw/hw01_hello_otus
 
-go 1.19
+go 1.20
