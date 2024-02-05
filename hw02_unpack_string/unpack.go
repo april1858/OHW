@@ -20,31 +20,12 @@ func Unpack(s string) (string, error) {
 		} else {
 			switch {
 			case unicode.IsDigit(r):
-				if unicode.IsLetter(buff) {
-					str := RepeatLetter(r, buff)
-					sb.WriteString(str)
-					buff = 0
-				} else {
-					str := RepeatControl(r)
-					sb.WriteString(str)
-					buff = 0
-				}
-			case unicode.IsLetter(r):
-				if unicode.IsLetter(buff) {
-					sb.WriteString(string(buff))
-					buff = r
-				} else {
-					sb.WriteString("\n")
-					buff = r
-				}
-			case unicode.IsControl(r):
-				if unicode.IsLetter(buff) {
-					sb.WriteString(string(buff))
-					buff = r
-				} else {
-					sb.WriteString("\n")
-					buff = r
-				}
+				str := Repeat(r, buff)
+				sb.WriteString(str)
+				buff = 0
+			default:
+				sb.WriteString(string(buff))
+				buff = r
 			}
 		}
 	}
@@ -54,15 +35,7 @@ func Unpack(s string) (string, error) {
 	return sb.String(), nil
 }
 
-func RepeatControl(r rune) string {
-	var b strings.Builder
-	for i := 0; i < int(r-'0'); i++ {
-		b.WriteString("\n")
-	}
-	return b.String()
-}
-
-func RepeatLetter(r, buff rune) string {
+func Repeat(r, buff rune) string {
 	str := strings.Repeat(string(buff), int(r-'0'))
 	return str
 }
