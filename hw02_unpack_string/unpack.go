@@ -6,14 +6,21 @@ import (
 	"unicode"
 )
 
+const (
+	SLASH rune = 92  // `\`
+	N     rune = 110 // `n`
+)
+
 var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(s string) (string, error) {
-	var sb strings.Builder
-	var buff, bf rune
-	var letter string
-	var err error
-	slash := 0
+	var (
+		sb       strings.Builder
+		buff, bf rune
+		letter   string
+		err      error
+		slash    = 0
+	)
 	for _, r := range s {
 		if r == 92 {
 			slash++
@@ -40,6 +47,9 @@ func Unpack(s string) (string, error) {
 		}
 	}
 	if buff != 0 {
+		if buff == SLASH {
+			return "", ErrInvalidString
+		}
 		sb.WriteString(string(buff))
 	}
 	return sb.String(), nil
@@ -56,7 +66,7 @@ func receivedD(r, buff rune, sl int) (string, rune) {
 	var bf rune
 	var letter string
 	switch {
-	case buff == 92:
+	case buff == SLASH:
 		switch {
 		case sl == 3:
 			return string(buff), r
@@ -77,9 +87,9 @@ func receivedD(r, buff rune, sl int) (string, rune) {
 func receivedC(r, buff rune) (string, rune, error) {
 	var letter string
 	switch {
-	case r == 110 && buff == 92:
+	case r == N && buff == SLASH:
 		return "", 0, ErrInvalidString
-	case r == 92 && buff == 92:
+	case r == SLASH && buff == SLASH:
 		return "", buff, nil
 	default:
 		letter = string(buff)
