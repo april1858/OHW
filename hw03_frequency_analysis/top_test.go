@@ -1,6 +1,7 @@
 package hw03frequencyanalysis
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -79,4 +80,48 @@ func TestTop10(t *testing.T) {
 			require.Equal(t, expected, Top10(text))
 		}
 	})
+}
+
+func Test_countsWords(t *testing.T) {
+	type args struct {
+		str string
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]int
+	}{
+		{name: "first", args: args{"abc abc, abc,"}, want: map[string]int{"abc,": 2, "abc": 1}},
+		{name: "second", args: args{"abc  abc, abc, x x   y"}, want: map[string]int{"abc,": 2, "abc": 1, "x": 2, "y": 1}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := countsWords(tt.args.str); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("countsWords() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_countsToSort(t *testing.T) {
+	type args struct {
+		counts map[string]int
+	}
+	tests := []struct {
+		name string
+		args args
+		want []Frequency
+	}{
+		{
+			name: "first", args: args{map[string]int{"abc,": 2, "abc": 1, "x": 2, "y": 1}},
+			want: []Frequency{{w: "abc,", n: 2}, {w: "x", n: 2}, {w: "abc", n: 1}, {w: "y", n: 1}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := countsToSort(tt.args.counts); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("countsToSort() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
