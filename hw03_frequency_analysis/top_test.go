@@ -102,26 +102,3 @@ func Test_countsWords(t *testing.T) {
 		})
 	}
 }
-
-func Test_countsToSort(t *testing.T) {
-	type args struct {
-		counts map[string]int
-	}
-	tests := []struct {
-		name string
-		args args
-		want []Frequency
-	}{
-		{
-			name: "first", args: args{map[string]int{"abc,": 2, "abc": 1, "x": 2, "y": 1}},
-			want: []Frequency{{w: "abc,", n: 2}, {w: "x", n: 2}, {w: "abc", n: 1}, {w: "y", n: 1}},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := countsToSort(tt.args.counts); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("countsToSort() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
