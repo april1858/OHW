@@ -17,9 +17,8 @@ func Top10(str string) []string {
 	counts := countsWords(str)
 	countsSort := countsToSort(counts)
 	allFr := frAnalysis10(countsSort)
-	fr10 := allFr[:10]
 	answer := make([]string, 0, 10)
-	for _, frequency := range fr10 {
+	for _, frequency := range allFr {
 		answer = append(answer, frequency.w)
 	}
 	return answer
@@ -60,6 +59,9 @@ func frAnalysis10(cs []Frequency) []Frequency {
 		if len(bucket) >= 10 || len(buckets) >= stop {
 			break
 		}
+	}
+	if len(buckets) >= 10 {
+		return buckets[:10]
 	}
 	return buckets
 }
