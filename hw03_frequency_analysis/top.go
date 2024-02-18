@@ -16,9 +16,9 @@ func Top10(str string) []string {
 	}
 	counts := countsWords(str)
 	countsSort := countsToSort(counts)
-	allFr := frAnalysis10(countsSort)
+	sb := sortingBuckets10(countsSort)
 	answer := make([]string, 0, 10)
-	for _, frequency := range allFr {
+	for _, frequency := range sb {
 		answer = append(answer, frequency.w)
 	}
 	return answer
@@ -47,10 +47,10 @@ func countsToSort(counts map[string]int) []Frequency {
 	return countsSort
 }
 
-// frAnalysis10() возвращает достаточное количество сегментов отсортированных по частоте и лексикографически
+// sortingBuckets10() возвращает достаточное количество сегментов отсортированных по частоте и лексикографически
 // для получения среза с 10-ю наиболее часто встречаемыми в тексте словами
 
-func frAnalysis10(cs []Frequency) []Frequency {
+func sortingBuckets10(cs []Frequency) []Frequency {
 	stop := len(cs)
 	buckets := make([]Frequency, 0, 1)
 	for {
