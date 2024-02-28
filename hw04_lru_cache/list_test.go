@@ -49,34 +49,3 @@ func TestList(t *testing.T) {
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
 }
-
-func Test_list_Len(t *testing.T) {
-	l := NewList()
-
-	l.PushFront(10) // [10]
-	l.PushBack(20)  // [10, 20]
-	l.PushBack(30)  // [10, 20, 30]
-
-	type fields struct {
-		front *ListItem
-		back  *ListItem
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   int
-	}{
-		{name: "first", fields: fields{front: l.Front(), back: l.Back()}, want: 3},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := &list{
-				front: tt.fields.front,
-				back:  tt.fields.back,
-			}
-			if got := l.Len(); got != tt.want {
-				t.Errorf("list.Len() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
