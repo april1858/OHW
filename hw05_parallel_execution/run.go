@@ -12,15 +12,23 @@ type Task func() error
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
 	// Place your code here.
+	if m <= 0 {
+		return ErrErrorsLimitExceeded
+	}
 	lt := len(tasks)
-	done := make(chan interface{})
-	c := tasksCh(done, tasks)
 	if lt < n {
 		n = lt
 	}
+	done := make(chan interface{})
+	c := tasksCh(done, tasks)
+
 	errors := workers(done, c, n)
 	answer := calculator(done, errors, m)
-	return answer
+
+	if answer <= 0 {
+		return ErrErrorsLimitExceeded
+	}
+	return nil
 }
 
 func tasksCh(done chan interface{}, tasks []Task) <-chan Task {
@@ -61,17 +69,14 @@ func workers(done chan interface{}, in <-chan Task, n int) <-chan error {
 	return c
 }
 
-func calculator(done chan interface{}, err <-chan error, m int) error {
+func calculator(done chan interface{}, err <-chan error, m int) int {
 	for e := range err {
-		if e != nil {
+		if e != nil && m > 0 {
 			m--
-			if m < 0 {
+			if m <= 0 {
 				close(done)
-				return ErrErrorsLimitExceeded
 			}
 		}
-
 	}
-	close(done)
-	return nil
+	return m
 }
