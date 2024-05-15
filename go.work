@@ -5,3 +5,5 @@ use ./hw02_unpack_string
 use ./hw03_frequency_analysis
 use ./hw04_lru_cache
 use ./hw06_pipeline_execution
+use ./hw07_file_copying
+
