@@ -57,7 +57,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	buf := make([]byte, sizeBuf)
 
 	if _, err := s.Read(buf); err != nil {
-		if err != io.EOF {
+		if errors.Is(err, io.EOF) {
 			log.Fatal("err - ", err)
 		}
 	}
