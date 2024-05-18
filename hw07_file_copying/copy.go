@@ -3,9 +3,7 @@ package main
 import (
 	"errors"
 	"io"
-	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/cheggaaa/pb"
@@ -19,21 +17,15 @@ var (
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	// Place your code here.
 
-	count := 3000
-
-	// create and start new bar
-	bar := pb.StartNew(count)
-
-	var sizeBuf int64
-
 	file, err := os.Open(fromPath)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	defer file.Close()
 
 	fi, err := file.Stat()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if limit == 0 {
@@ -46,36 +38,19 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrOffsetExceedsFileSize
 	}
 
-	s := io.NewSectionReader(file, offset, limit)
-
-	if offset+limit > fi.Size() {
-		sizeBuf = fi.Size() - offset
-	} else {
-		sizeBuf = limit
-	}
-
-	buf := make([]byte, sizeBuf)
-
-	if _, err := s.Read(buf); err != nil {
-		if errors.Is(err, io.EOF) {
-			log.Fatal("err - ", err)
-		}
-	}
-	file.Close()
+	reader := io.NewSectionReader(file, offset, limit)
 
 	fileTo, _ := os.Create(toPath)
+	defer fileTo.Close()
 
-	if _, err := io.Copy(fileTo, strings.NewReader(string(buf))); err != nil {
-		log.Fatal(err)
-	}
-	fileTo.Close()
+	bar := pb.New(int(limit)).SetUnits(pb.U_BYTES).SetRefreshRate(time.Millisecond * 10)
 
-	for i := 0; i < count; i++ {
-		bar.Increment()
-		time.Sleep(time.Millisecond)
-	}
+	bar.ShowSpeed = true
+	bar.Start()
 
-	// finish bar
+	pxReader := bar.NewProxyReader(reader)
+
+	io.Copy(fileTo, pxReader)
 	bar.Finish()
 
 	return nil
