@@ -1,6 +1,7 @@
 package hw06pipelineexecution
 
 import (
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -60,7 +61,6 @@ func TestPipeline(t *testing.T) {
 			// ~0.8s for processing 5 values in 4 stages (100ms every) concurrently
 			int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault))
 	})
-
 	t.Run("done case", func(t *testing.T) {
 		in := make(Bi)
 		done := make(Bi)
@@ -90,4 +90,39 @@ func TestPipeline(t *testing.T) {
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
 	})
+}
+
+func TestSplit(t *testing.T) {
+	in := make(Bi)
+	data := []int{1, 2, 3, 4, 5}
+
+	go func() {
+		for _, v := range data {
+			in <- v
+		}
+		close(in)
+	}()
+	type args struct {
+		done   In
+		source <-chan interface{}
+		n      int
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{name: "Split 1", args: args{done: nil, source: in, n: 1}, want: 1},
+		{name: "Split 2", args: args{done: nil, source: in, n: 2}, want: 2},
+		{name: "Split done", args: args{done: make(Bi), source: in, n: 2}, want: 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := len(Split(tt.args.done, tt.args.source, tt.args.n))
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Split() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
