@@ -1,7 +1,9 @@
 package hw06pipelineexecution
 
 import (
+	"sort"
 	"sync"
+	"time"
 )
 
 type (
@@ -12,59 +14,75 @@ type (
 
 type Stage func(in In) (out Out)
 
+type Data struct {
+	val  interface{}
+	turn int
+}
+
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	// Place your code here.
-	out := make([]<-chan interface{}, 0)
-	dests := Split(done, in, 1) // 1 - if the initial order is needed
+	sd := make([]Data, 0)
+	data := Splitter(done, in, stages...)
+	for d := range data {
+		sd = append(sd, d)
+	}
+	sort.Slice(sd, func(i, j int) bool {
+		return sd[i].turn < sd[j].turn
+	})
+
+	out := genAnswer(sd)
+
+	return out
+}
+
+func genAnswer(sd []Data) In {
+	out := make(Bi)
+	go func() {
+		for _, v := range sd {
+			out <- v.val
+		}
+		close(out)
+	}()
+
+	return out
+}
+
+func Splitter(done In, in In, stages ...Stage) <-chan Data {
+	out := make(chan Data)
+	turn := -1
 	var wg sync.WaitGroup
-	for _, ch := range dests {
+	for i := range in {
+		turn++
 		wg.Add(1)
-		go func(c In) {
+		go func(done In, i interface{}, q int) {
+			msg := Data{turn: q}
 			defer wg.Done()
-			for _, stage := range stages {
-				c = stage(c)
+			in := g(i)
+			for i := 0; i < len(stages); i++ {
+				select {
+				case <-done:
+					return
+				default:
+					in = stages[i](in)
+					time.Sleep(time.Millisecond * 75)
+				}
 			}
-			out = append(out, c)
-		}(ch)
-	}
-	wg.Wait()
-	answer := Funnel(out)
-	return answer
-}
+			msg.val = <-in
 
-func Split(done In, source <-chan interface{}, n int) []<-chan interface{} {
-	if done != nil {
-		return nil
-	}
-	dests := make([]<-chan interface{}, 0)
-	for i := 0; i < n; i++ {
-		ch := make((chan interface{}))
-		dests = append(dests, ch)
-		go func() {
-			defer close(ch)
-			for val := range source {
-				ch <- val
-			}
-		}()
-	}
-	return dests
-}
-
-func Funnel(source []<-chan interface{}) Out {
-	dest := make(chan interface{})
-	var wg sync.WaitGroup
-	wg.Add(len(source))
-	for _, ch := range source {
-		go func(c <-chan interface{}) {
-			defer wg.Done()
-			for i := range c {
-				dest <- i
-			}
-		}(ch)
+			out <- msg
+		}(done, i, turn)
 	}
 	go func() {
 		wg.Wait()
-		close(dest)
+		close(out)
 	}()
-	return dest
+	return out
+}
+
+func g(in interface{}) In {
+	c := make(Bi)
+	go func() {
+		c <- in
+	}()
+	return c
 }
