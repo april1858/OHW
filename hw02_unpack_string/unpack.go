@@ -44,14 +44,13 @@ func Unpack(s string) (string, error) {
 
 			if i < stringLen-1 && unicode.IsDigit(rune(s[i+1])) {
 				return "", ErrInvalidString
+			}
+			n, err := strconv.Atoi(string(s[i]))
+			if err != nil {
+				fmt.Println("errir - ", err)
 			} else {
-				n, err := strconv.Atoi(string(s[i]))
-				if err != nil {
-					fmt.Println("errir - ", err)
-				} else {
-					b.WriteString(strings.Repeat(string(s[i-1]), n-1))
-					i++
-				}
+				b.WriteString(strings.Repeat(string(s[i-1]), n-1))
+				i++
 			}
 
 		default:
@@ -72,6 +71,5 @@ func Unpack(s string) (string, error) {
 			}
 		}
 	}
-	fmt.Println(b.String())
 	return b.String(), nil
 }
