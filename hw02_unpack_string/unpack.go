@@ -2,101 +2,76 @@ package hw02unpackstring
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 )
 
 const (
-	SLASH rune = 92 // `\`
+	BACKSLASH byte = 92
+	ZERO      byte = 48
 )
 
 var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(s string) (string, error) {
-	var (
-		sb       strings.Builder
-		buff, bf rune
-		letter   string
-		err      error
-		slash    = 0
-	)
-	for _, r := range s {
-		if r == 92 {
-			slash++
-		}
+	stringLen := len(s)
+	var b strings.Builder
+
+	if stringLen == 0 {
+		return "", nil
+	}
+
+	if unicode.IsDigit(rune(s[0])) {
+		return "", ErrInvalidString
+	}
+
+	i := 0
+
+	for i < stringLen {
 		switch {
-		case buff == 0:
-			bf, err := buffE(r)
-			if err != nil {
-				return "", err
+		case !unicode.IsDigit(rune(s[i])) && s[i] != BACKSLASH:
+
+			if i < stringLen-1 && s[i+1] == ZERO {
+				i += 2
+			} else {
+				b.WriteString(string(s[i]))
+				i++
 			}
-			buff = bf
-		case unicode.IsDigit(r):
-			letter, bf = receivedD(r, buff, slash)
-			sb.WriteString(letter)
-			buff = bf
-			slash = 0
-		default:
-			letter, bf, err = receivedC(r, buff, slash)
-			if err != nil {
-				return "", err
+
+		case unicode.IsDigit(rune(s[i])):
+
+			if i < stringLen-1 && unicode.IsDigit(rune(s[i+1])) {
+				return "", ErrInvalidString
+			} else {
+				n, err := strconv.Atoi(string(s[i]))
+				if err != nil {
+					fmt.Println("errir - ", err)
+				} else {
+					b.WriteString(strings.Repeat(string(s[i-1]), n-1))
+					i++
+				}
 			}
-			sb.WriteString(letter)
-			buff = bf
-		}
-	}
-	if buff != 0 {
-		if buff == SLASH && slash == 1 {
-			return "", ErrInvalidString
-		}
-		sb.WriteString(string(buff))
-	}
-	return sb.String(), nil
-}
 
-func buffE(r rune) (rune, error) {
-	if unicode.IsDigit(r) {
-		return 0, ErrInvalidString
-	}
-	return r, nil
-}
-
-func receivedD(r, buff rune, sl int) (string, rune) {
-	var bf rune
-	var letter string
-	switch {
-	case buff == SLASH:
-		switch {
-		case sl == 3:
-			return string(buff), r
-		case sl == 2:
-			letter = Repeat(r, buff)
-			bf = 0
 		default:
-			bf = r
+
+			switch {
+			case i == stringLen-1:
+				return "", ErrInvalidString
+
+			case unicode.IsDigit(rune(s[i+1])):
+				b.WriteString(string(s[i+1]))
+				i += 2
+
+			case s[i+1] == BACKSLASH:
+				b.WriteString(string(s[i+1]))
+				i += 2
+			case s[i+1] != BACKSLASH:
+				return "", ErrInvalidString
+			}
 		}
-
-	default:
-		letter = Repeat(r, buff)
-		bf = 0
 	}
-	return letter, bf
-}
-
-func receivedC(r, buff rune, sl int) (string, rune, error) {
-	var letter string
-	switch {
-	case buff == SLASH && sl == 1:
-		return "", 0, ErrInvalidString
-	case r == SLASH && buff == SLASH:
-		return "", buff, nil
-	default:
-		letter = string(buff)
-	}
-	return letter, r, nil
-}
-
-func Repeat(r, buff rune) string {
-	str := strings.Repeat(string(buff), int(r-'0'))
-	return str
+	fmt.Println(b.String())
+	return b.String(), nil
 }
