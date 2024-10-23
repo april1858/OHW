@@ -33,23 +33,23 @@ func Unpack(s string) (string, error) {
 		switch {
 		case !unicode.IsDigit(rune(s[i])) && s[i] != BACKSLASH:
 
-			if i < stringLen-1 && s[i+1] == ZERO {
+			if i < stringLen-1 && s[i+1] == ZERO { // aaa0b => aab
 				i += 2
-			} else {
+			} else { // write the symbol as it is
 				b.WriteString(string(s[i]))
 				i++
 			}
 
 		case unicode.IsDigit(rune(s[i])):
 
-			if i < stringLen-1 && unicode.IsDigit(rune(s[i+1])) {
+			if i < stringLen-1 && unicode.IsDigit(rune(s[i+1])) { // two digits in a row "45"
 				return "", ErrInvalidString
 			}
 			n, err := strconv.Atoi(string(s[i]))
 			if err != nil {
-				fmt.Println("errir - ", err)
+				fmt.Println("error strconv - ", err)
 			} else {
-				b.WriteString(strings.Repeat(string(s[i-1]), n-1))
+				b.WriteString(strings.Repeat(string(s[i-1]), n-1)) // "a4bc2d5e" => "aaaabccddddde". a + aaa
 				i++
 			}
 
@@ -57,16 +57,16 @@ func Unpack(s string) (string, error) {
 
 			switch {
 			case i == stringLen-1:
-				return "", ErrInvalidString
+				return "", ErrInvalidString // `qwe\`
 
-			case unicode.IsDigit(rune(s[i+1])):
+			case unicode.IsDigit(rune(s[i+1])): // all with slashes
 				b.WriteString(string(s[i+1]))
 				i += 2
 
-			case s[i+1] == BACKSLASH:
+			case s[i+1] == BACKSLASH: // more than one slash
 				b.WriteString(string(s[i+1]))
 				i += 2
-			case s[i+1] != BACKSLASH:
+			case s[i+1] != BACKSLASH: // `qwe\t`
 				return "", ErrInvalidString
 			}
 		}
