@@ -14,7 +14,8 @@ type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	// Place your code here.
-	return finish(done, stg3(done, stg2(done, stg1(done, stg0(done, gen(done, in), stages[0]), stages[1]), stages[2]), stages[3]))
+	return finish(done, stg3(done, stg2(done, stg1(done,
+		stg0(done, gen(done, in), stages[0]), stages[1]), stages[2]), stages[3]))
 }
 
 func gen(done In, in In) Out {
